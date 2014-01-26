@@ -15,7 +15,7 @@ has ua => sub { Mojo::UserAgent->new->inactivity_timeout(0) };
 has url => sub {
   my $self = shift;
   my $req  = $self->request || '';
-  my $url = 
+  my $url  = 
     Mojo::URL
       ->new("http://friendfeed-api.com/v2/updates$req")
       ->query( updates => 1 );
@@ -27,8 +27,8 @@ has url => sub {
 
 sub listen {
   my $self = shift;
-  my $ua = $self->ua;
-  my $url = $self->url;
+  my $ua   = $self->ua;
+  my $url  = $self->url;
   say "Subscribing to: $url" if DEBUG;
 
   $ua->get( $url => sub {
@@ -52,4 +52,83 @@ sub listen {
 }
 
 1;
+
+=head1 NAME
+
+Mojo::FriendFeed - A non-blocking FriendFeed listener for Mojolicious
+
+=head1 SYNOPSIS
+
+ use Mojo::Base -strict;
+ use Mojo::IOLoop;
+ use Mojo::FriendFeed;
+ use Data::Dumper;
+
+ my $ff = Mojo::FriendFeed->new( request => '/feed/cpan' );
+ $ff->on( entry => sub { say Dumper $_[1] } );
+ $ff->listen;
+
+ Mojo::IOLoop->start;
+
+=head1 DESCRIPTION
+
+A simple non-blocking FriendFeed listener for use with the Mojolicious toolkit.
+Its code is highly influenced by Miyagawa's L<AnyEvent::FriendFeed::Realtime>.
+
+=head1 EVENTS
+
+Mojo::FriendFeed inherits all events from L<Mojo::EventEmitter> and implements the following new ones.
+
+=head2 entry
+
+ $ff->on( entry => sub {
+   my ($ff, $entry) = @_;
+   ...
+ });
+
+Emitted when a new entry has been received, once for each entry.
+It is passed the instance and the data decoded from the JSON response.
+
+=head2 error
+
+ $ff->on( error => sub {
+   my ($ff, $tx) = @_;
+   ...
+ });
+
+Emitted for transaction errors. 
+It is passed the instance and the L<Mojo::Transaction> object which encountered the error.
+Note that after emitting the error event, the C<listen> method exits, use this hook to re-attach if desired.
+
+=head1 ATTRIBUTES
+
+Mojo::FriendFeed inherits all attributes from L<Mojo::EventEmitter> and implements the following new ones.
+
+=head2 request 
+
+The feed to request. Default is an empty string.
+
+=head2 ua
+
+An instance of L<Mojo::UserAgent> for making the feed request.
+
+=head2 url
+
+The (generated) url of the feed. Using the default value is recommended.
+
+=head2 username 
+
+Your FriendFeed username. If set, authentication will be used.
+
+=head2 remote_key
+
+Your FriendFeed API key. Unused unless C<username> is set.
+
+=head1 METHODS
+
+Mojo::FriendFeed inherits all methods from L<Mojo::EventEmitter> and implements the following new ones.
+
+=head2 listen
+
+Connects to the feed and attaches events. Note that this does not start an IOLoop and will not block.
 

@@ -2,7 +2,6 @@
 
 use Mojo::Base -strict;
 
-use DDP;
 use Mojo::FriendFeed;
 use Mojo::IOLoop;
 use Mojo::DOM;
