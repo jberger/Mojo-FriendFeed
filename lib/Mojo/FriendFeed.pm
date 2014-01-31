@@ -29,12 +29,16 @@ sub listen {
   my $self = shift;
   my $ua   = $self->ua;
   my $url  = $self->url;
-  say "Subscribing to: $url" if DEBUG;
+  warn "Subscribing to: $url\n" if DEBUG;
+
+  $self->{stop} = 0;
 
   $ua->get( $url => sub {
     my ($ua, $tx) = @_;
 
-    say "Received message: " . $tx->res->body if DEBUG;
+    return if $self->{stop};
+
+    warn "Received message: @{[$tx->res->body]}" if DEBUG;
 
     my $json = $tx->res->json;
     unless ($tx->success and $json) {
@@ -44,12 +48,16 @@ sub listen {
 
     $self->emit( entry => $_ ) for @{ $json->{entries} };
 
+    return if $self->{stop};
+
     if ($json->{realtime}) {
       my $next = $url->clone->query(cursor => $json->{realtime}{cursor});
       $ua->get( $next => __SUB__ );
     } 
   });
 }
+
+sub stop { shift->{stop} = 1 }
 
 1;
 
