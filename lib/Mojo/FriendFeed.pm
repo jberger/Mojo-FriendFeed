@@ -151,8 +151,6 @@ Connects to the feed and attaches events. Note that this does not start an IOLoo
 
 L<Mojolicious> - High performance non-blocking web framework and toolkit for Perl
 
-=back
-
 =item *
 
 L<Mojo::IRC> - IRC interaction for use with the Mojolicious' L<Mojo::IOLoop>
@@ -160,6 +158,8 @@ L<Mojo::IRC> - IRC interaction for use with the Mojolicious' L<Mojo::IOLoop>
 =item *
 
 L<AnyEvent::FriendFeed::Realtime> - The inspiration for this module, useful when using L<AnyEvent>
+
+=back
 
 =head1 SOURCE REPOSITORY
 
