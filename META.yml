@@ -15,7 +15,7 @@ name: Mojo-FriendFeed
 provides:
   Mojo::FriendFeed:
     file: lib/Mojo/FriendFeed.pm
-    version: 0.01
+    version: 0.02
 requires:
   Mojolicious: 4.0
   perl: v5.16.0
@@ -23,4 +23,4 @@ resources:
   bugtracker: https://github.com/jberger/Mojo-FriendFeed/issues
   license: http://dev.perl.org/licenses/
   repository: https://github.com/jberger/Mojo-FriendFeed
-version: 0.01
+version: 0.02

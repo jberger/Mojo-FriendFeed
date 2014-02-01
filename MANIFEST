@@ -1,8 +1,9 @@
 Build.PL
+Changes
 ex/cpan.pl
 lib/Mojo/FriendFeed.pm
 MANIFEST			This list of files
+META.json
+META.yml
 README.pod
 t/listen.t
-META.yml
-META.json

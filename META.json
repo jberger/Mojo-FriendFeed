@@ -29,7 +29,7 @@
    "provides" : {
       "Mojo::FriendFeed" : {
          "file" : "lib/Mojo/FriendFeed.pm",
-         "version" : "0.01"
+         "version" : "0.02"
       }
    },
    "release_status" : "stable",
@@ -44,5 +44,5 @@
          "url" : "https://github.com/jberger/Mojo-FriendFeed"
       }
    },
-   "version" : "0.01"
+   "version" : "0.02"
 }
