@@ -6,6 +6,8 @@ use v5.16;
 use Mojo::UserAgent;
 use Mojo::URL;
 
+use Scalar::Util 'weaken';
+
 use constant DEBUG => $ENV{MOJO_FRIENDFEED_DEBUG};
 
 has [qw/request username remote_key/] => '';
@@ -31,12 +33,12 @@ sub listen {
   my $url  = $self->url;
   warn "Subscribing to: $url\n" if DEBUG;
 
-  $self->{stop} = 0;
+  weaken $self;
 
   $ua->get( $url => sub {
     my ($ua, $tx) = @_;
 
-    return if $self->{stop};
+    return unless $self;
 
     warn "Received message: @{[$tx->res->body]}" if DEBUG;
 
@@ -48,7 +50,7 @@ sub listen {
 
     $self->emit( entry => $_ ) for @{ $json->{entries} };
 
-    return if $self->{stop};
+    return unless $self;
 
     if ($json->{realtime}) {
       my $next = $url->clone->query(cursor => $json->{realtime}{cursor});
@@ -56,8 +58,6 @@ sub listen {
     } 
   });
 }
-
-sub stop { shift->{stop} = 1 }
 
 1;
 
