@@ -8,12 +8,24 @@ use Mojo::DOM;
 use Mojo::URL;
 use Mojo::IRC;
 
+use Getopt::Long;
+
+GetOptions(
+  'channel=s'  => \(my $chan   = 'release'),
+  'nickname=s' => \(my $nick   = 'release_bot'),
+  'pattern=s'  => \my $pattern,
+  'server=s'   => \(my $server = 'irc.perl.org:6667'),
+  'user=s'     => \(my $user   = 'new cpan releases'), 
+);
+
+$pattern = qr/$pattern/ if $pattern;
+
 my $send = sub { shift->write( privmsg => shift, ":@_" ) };
 
 my $irc = Mojo::IRC->new(
-  nick   => 'release_bot',
-  user   => 'new cpan releases',
-  server => 'irc.perl.org:6667',
+  nick   => $nick,
+  user   => $user,
+  server => $server,
 );
 $irc->register_default_event_handlers;
 $irc->connect(sub{
@@ -22,7 +34,7 @@ $irc->connect(sub{
     warn $err;
     exit 1;
   }
-  $irc->write( join => '#release' );
+  $irc->write( join => "#$chan" );
 });
 
 my $ff = Mojo::FriendFeed->new( request => '/feed/cpan' );
@@ -35,6 +47,10 @@ $ff->on( entry => sub {
   $file =~ s/\.tar\.gz//;
   
   my $msg = $dom->text . " http://metacpan.org/release/$pauseid/$file";
+  if ($pattern and $msg !~ $pattern) {
+    return;
+  }
+
   $irc->$send( '#release' => $msg );
   say $msg;
 });
