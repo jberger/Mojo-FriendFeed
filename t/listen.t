@@ -3,6 +3,7 @@ BEGIN { $ENV{MOJO_REACTOR} = 'Poll' }
 use Mojolicious::Lite;
 use Mojo::IOLoop;
 
+# a mock feed, whose entry says whether is came from a cursor, for ease of testing
 any '/feed' => sub { 
   my $c = shift;
   $c->render_later;
@@ -15,11 +16,12 @@ any '/feed' => sub {
   });
 };
 
+# a mock feed error, has a 401 status and a fake errorCode mimicing a friend feed errorCode
 any '/error' => sub {
   my $c = shift;
   $c->render_later;
   Mojo::IOLoop->timer( 0.5 => sub {
-    $c->render( text => 'nada', status => 500 );
+    $c->render( json => { errorCode => 'test-feed-error' }, status => 401 );
   });
 };
 
@@ -28,22 +30,27 @@ use Test::Mojo;
 
 my $t = Test::Mojo->new;
 
-$t->get_ok( '/feed' )
-  ->status_is(200)
-  ->json_is( '/entries/0/got_cursor' => 0 );
+subtest 'Ensure sane mock service' => sub {
+  $t->get_ok( '/feed' )
+    ->status_is(200)
+    ->json_is( '/entries/0/got_cursor' => 0 );
 
-$t->get_ok( '/feed' => form => { cursor => 1 } )
-  ->status_is(200)
-  ->json_is( '/entries/0/got_cursor' => 1 );
+  $t->get_ok( '/feed' => form => { cursor => 1 } )
+    ->status_is(200)
+    ->json_is( '/entries/0/got_cursor' => 1 );
 
-$t->get_ok( '/error' )
-  ->status_is(500);
+  $t->get_ok( '/error' )
+    ->status_is(401);
+};
   
 use Mojo::FriendFeed;
 use Mojo::URL;
 
+my $feed = $t->app->url_for('feed');
+my $err  = $t->app->url_for('error');
+
 subtest 'Simple' => sub {
-  my $ff = Mojo::FriendFeed->new( url => Mojo::URL->new('/feed') );
+  my $ff = Mojo::FriendFeed->new( url => $feed->clone );
   my $ok = 0;
   $ff->on( entry => sub { $ok++; Mojo::IOLoop->stop });
   $ff->listen;
@@ -52,7 +59,7 @@ subtest 'Simple' => sub {
 };
 
 subtest 'Cursor' => sub {
-  my $ff = Mojo::FriendFeed->new( url => Mojo::URL->new('/feed') );
+  my $ff = Mojo::FriendFeed->new( url => $feed->clone );
   my $ok = 0;
   $ff->on( entry => sub { 
     $ok++;
@@ -64,13 +71,25 @@ subtest 'Cursor' => sub {
 };
 
 subtest 'Error' => sub {
-  my $ff = Mojo::FriendFeed->new( url => Mojo::URL->new('/error') );
-  my $ok = 0;
-  $ff->on( error => sub { shift->url( Mojo::URL->new('/feed') )->listen });
+  my $ok;
+  local $SIG{__DIE__} = sub { $ok++; Mojo::IOLoop->stop };
+  my $ff = Mojo::FriendFeed->new( url => $err->clone );
+  $ff->listen;
+  Mojo::IOLoop->start;
+  ok $ok, 'unhandled error throws';
+};
+
+subtest 'Reconnect after error' => sub {
+  my $ff = Mojo::FriendFeed->new( url => $err->clone );
+  my ($ok, $err, $status, $ff_err);
+  $ff->on( error => sub { (undef, $err, $status, $ff_err) = @_; shift->url( $feed->clone )->listen });
   $ff->on( entry => sub { $ok++; Mojo::IOLoop->stop });
   $ff->listen;
   Mojo::IOLoop->start;
-  ok $ok;
+  ok $err, 'caught error event';
+  is $status, 401;
+  is $ff_err, 'test-feed-error', 'got errorCode';
+  ok $ok, 'restarted and got next message';
 };
 
 done_testing;

@@ -30,7 +30,7 @@ has url => sub {
 sub listen {
   my $self = shift;
   my $ua   = $self->ua;
-  my $url  = $self->url;
+  my $url  = $self->url->clone;
   warn "Subscribing to: $url\n" if DEBUG;
 
   weaken $self;
@@ -44,7 +44,7 @@ sub listen {
 
     my $json = $tx->res->json;
     unless ($tx->success and $json) {
-      $self->emit( error => $tx->error );
+      $self->emit( error => $tx->error, $tx->res->json('/errorCode') );
       return;
     }
 
@@ -100,13 +100,16 @@ It is passed the instance and the data decoded from the JSON response.
 =head2 error
 
  $ff->on( error => sub {
-   my ($ff, $tx) = @_;
+   my ($ff, $error, $status, $ff_error) = @_;
    ...
  });
 
 Emitted for transaction errors. 
-It is passed the instance and the L<Mojo::Transaction> object which encountered the error.
-Note that after emitting the error event, the C<listen> method exits, use this hook to re-attach if desired.
+Fatal if not handled.
+It is passed the instance, the HTTP error message, HTTP status, and the "errorCode" sent from FriendFeed if available.
+Note that after emitting the error event, the C<listen> method exits, though you may use this hook to re-attach if desired.
+
+ $ff->on( error => sub { shift->listen } );
 
 =head1 ATTRIBUTES
 
