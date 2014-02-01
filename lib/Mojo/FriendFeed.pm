@@ -44,7 +44,7 @@ sub listen {
 
     my $json = $tx->res->json;
     unless ($tx->success and $json) {
-      $self->emit( error => $tx->error, $tx->res->json('/errorCode') );
+      $self->emit( error => $tx->error, ($json || {})->{errorCode} );
       return;
     }
 
