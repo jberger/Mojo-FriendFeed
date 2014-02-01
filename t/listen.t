@@ -36,6 +36,9 @@ $t->get_ok( '/feed' => form => { cursor => 1 } )
   ->status_is(200)
   ->json_is( '/entries/0/got_cursor' => 1 );
 
+$t->get_ok( '/error' )
+  ->status_is(500);
+  
 use Mojo::FriendFeed;
 use Mojo::URL;
 
