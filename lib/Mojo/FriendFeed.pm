@@ -35,7 +35,8 @@ sub listen {
 
   weaken $self;
 
-  $ua->get( $url => sub {
+  my $tx = $self->_build_tx( $ua, $url );
+  $ua->start( $tx => sub {
     my ($ua, $tx) = @_;
 
     return unless $self;
@@ -45,6 +46,7 @@ sub listen {
     my $json = $tx->res->json;
     unless ($tx->success and $json) {
       $self->emit( error => $tx );
+      #warn $tx->error;
       return;
     }
 
@@ -53,10 +55,19 @@ sub listen {
     return unless $self;
 
     if ($json->{realtime}) {
-      my $next = $url->clone->query(cursor => $json->{realtime}{cursor});
-      $ua->get( $next => __SUB__ );
+      my $url  = $self->url->clone->query(cursor => $json->{realtime}{cursor});
+      my $next = $self->_build_tx( $ua, $url );
+      $ua->start( $next => __SUB__ );
     } 
   });
+}
+
+sub _build_tx {
+  my ($self, $ua, $url) = @_;
+  weaken $self;
+  my $tx = $ua->build_tx( GET => $url );
+#  $tx->res->on( progress => sub { shift->error('done') unless $self } );
+  return $tx;
 }
 
 1;
