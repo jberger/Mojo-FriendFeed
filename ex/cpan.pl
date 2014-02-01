@@ -18,6 +18,7 @@ GetOptions(
   'user=s'     => \(my $user   = 'new cpan releases'), 
 );
 
+$chan = "#$chan" unless $chan =~ /^#/;
 $pattern = qr/$pattern/ if $pattern;
 
 my $send = sub { shift->write( privmsg => shift, ":@_" ) };
@@ -34,7 +35,7 @@ $irc->connect(sub{
     warn $err;
     exit 1;
   }
-  $irc->write( join => "#$chan" );
+  $irc->write( join => $chan );
 });
 
 my $ff = Mojo::FriendFeed->new( request => '/feed/cpan' );
@@ -51,7 +52,7 @@ $ff->on( entry => sub {
     return;
   }
 
-  $irc->$send( '#release' => $msg );
+  $irc->$send( $chan => $msg );
   say $msg;
 });
 
