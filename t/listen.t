@@ -10,19 +10,17 @@ any '/feed' => sub {
     entries  => [ { got_cursor => !! $c->param('cursor') } ],
     realtime => { cursor => 1 },
   };
-  my $timer = Mojo::IOLoop->timer( 0.5 => sub { 
-    $c->render( json => $data ) if $c->tx; 
+  Mojo::IOLoop->timer( 0.5 => sub { 
+    $c->render( json => $data ); 
   });
-  $c->on( finish => sub { Mojo::IOLoop->remove($timer) unless $c->tx } );
 };
 
 any '/error' => sub {
   my $c = shift;
   $c->render_later;
-  my $timer = Mojo::IOLoop->timer( 0.5 => sub {
+  Mojo::IOLoop->timer( 0.5 => sub {
     $c->render( text => 'nada', status => 500 );
   });
-  $c->on( finish => sub { Mojo::IOLoop->remove($timer) } );
 };
 
 use Test::More;
