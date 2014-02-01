@@ -140,3 +140,6 @@ Mojo::FriendFeed inherits all methods from L<Mojo::EventEmitter> and implements 
 
 Connects to the feed and attaches events. Note that this does not start an IOLoop and will not block.
 
+=head2 stop
+
+Stops the listener at the next available opportunity.
