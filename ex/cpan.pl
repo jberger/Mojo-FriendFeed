@@ -39,7 +39,7 @@ $ff->on( entry => sub {
   say $msg;
 });
 
-$ff->on( error => sub { say scalar $_[1]->error } );
+$ff->on( error => sub { warn "$_[1]\n"; shift->listen } );
 
 $ff->listen;
 
