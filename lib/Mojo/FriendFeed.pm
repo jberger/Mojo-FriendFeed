@@ -1,4 +1,4 @@
-package Mojo::FriendFeed 0.03;
+package Mojo::FriendFeed 0.04;
 
 use Mojo::Base 'Mojo::EventEmitter';
 use v5.16;

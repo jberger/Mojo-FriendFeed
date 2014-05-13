@@ -1,5 +1,8 @@
 Revision history for Perl module Mojo::FriendFeed
 
+0.04 2014-05-12
+  - Improved example bot
+
 0.03 2014-02-01
   - Fix bug in the example script
 
