@@ -10,8 +10,6 @@ use Mojo::URL;
 use Mojo::IRC;
 use List::Util 'first';
 
-use DDP;
-
 use Getopt::Long;
 
 my $conf_file = shift or die "A configuration file is required.\n";
@@ -76,18 +74,22 @@ $ff->on( entry => sub {
   
   my $msg = $data->{text} . " http://metacpan.org/release/$data->{pause_id}/$data->{dist}-$data->{version}";
   say $msg;
-  p $data;
 
   my @deps = @{ $data->{deps} || [] };
 
   for my $job (@{ $conf{jobs} }) {
     if (my $filter = $job->{dist}) {
-      next unless $data->{dist} =~ $filter;
+      if ($data->{dist} =~ $filter) {
+        $irc->$send( $job->{channel} => $msg );
+        next;
+      }
     }
     if (my $filter = $job->{deps}) {
-      next unless first { $_ =~ $filter } @deps;
+      if (my $dep = first { $_ =~ $filter } @deps) {
+        $irc->$send( $job->{channel} => $msg . " (depends on $dep)");
+        next;
+      }
     }
-    $irc->$send( $job->{channel} => $msg );
   }
 });
 
