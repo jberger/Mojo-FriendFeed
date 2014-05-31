@@ -1,5 +1,9 @@
 Revision history for Perl module Mojo::FriendFeed
 
+0.05 2014-05-31
+  - Improved compatibility with Mojolicious 5.00 (no bump required)
+  - Changed signature of error event callback
+
 0.04 2014-05-12
   - Improved example bot
 

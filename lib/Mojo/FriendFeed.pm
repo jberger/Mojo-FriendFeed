@@ -1,4 +1,4 @@
-package Mojo::FriendFeed 0.04;
+package Mojo::FriendFeed 0.05;
 
 use Mojo::Base 'Mojo::EventEmitter';
 use v5.16;
@@ -44,7 +44,7 @@ sub listen {
 
     my $json = $tx->res->json;
     unless ($tx->success and $json) {
-      $self->emit( error => $tx->error, ($json || {})->{errorCode} );
+      $self->emit( error => $tx, ($json || {})->{errorCode} );
       return;
     }
 
@@ -100,14 +100,15 @@ It is passed the instance and the data decoded from the JSON response.
 =head2 error
 
  $ff->on( error => sub {
-   my ($ff, $error, $status, $ff_error) = @_;
+   my ($ff, $tx, $ff_error) = @_;
    ...
  });
 
 Emitted for transaction errors. 
 Fatal if not handled.
-It is passed the instance, the HTTP error message, HTTP status, and the "errorCode" sent from FriendFeed if available.
+It is passed the instance, the transaction object, and the "errorCode" sent from FriendFeed if available.
 Note that after emitting the error event, the C<listen> method exits, though you may use this hook to re-attach if desired.
+Note also that the transaction object's C<error> method is likely to be useful, though note that its behavior changes slightly in Mojolicious 5.0.
 
  $ff->on( error => sub { shift->listen } );
 

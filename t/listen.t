@@ -8,7 +8,7 @@ any '/feed' => sub {
   my $c = shift;
   $c->render_later;
   my $data = { 
-    entries  => [ { got_cursor => !! $c->param('cursor') } ],
+    entries  => [ { got_cursor => !! $c->param('cursor') ? 1 : 0 } ],
     realtime => { cursor => 1 },
   };
   Mojo::IOLoop->timer( 0.5 => sub { 
@@ -81,13 +81,13 @@ subtest 'Error' => sub {
 
 subtest 'Reconnect after error' => sub {
   my $ff = Mojo::FriendFeed->new( url => $err->clone );
-  my ($ok, $err, $status, $ff_err);
-  $ff->on( error => sub { (undef, $err, $status, $ff_err) = @_; shift->url( $feed->clone )->listen });
+  my ($ok, $tx, $ff_err);
+  $ff->on( error => sub { (undef, $tx, $ff_err) = @_; shift->url( $feed->clone )->listen });
   $ff->on( entry => sub { $ok++; Mojo::IOLoop->stop });
   $ff->listen;
   Mojo::IOLoop->start;
-  ok $err, 'caught error event';
-  is $status, 401;
+  ok $tx, 'caught error event';
+  is $tx->res->code, 401;
   is $ff_err, 'test-feed-error', 'got errorCode';
   ok $ok, 'restarted and got next message';
 };

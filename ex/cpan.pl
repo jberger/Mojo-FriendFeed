@@ -93,7 +93,11 @@ $ff->on( entry => sub {
   }
 });
 
-$ff->on( error => sub { warn "$_[1]\n"; shift->listen } );
+$ff->on( error => sub { 
+  my ($ff, $tx, $err) = @_;
+  warn $err || $tx->res->message;
+  $ff->listen
+});
 
 $ff->listen;
 
