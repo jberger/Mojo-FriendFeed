@@ -4,7 +4,7 @@
       "Joel Berger <joel.a.berger@gmail.com>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.4203",
+   "generated_by" : "Module::Build version 0.4205",
    "license" : [
       "perl_5"
    ],
@@ -29,7 +29,7 @@
    "provides" : {
       "Mojo::FriendFeed" : {
          "file" : "lib/Mojo/FriendFeed.pm",
-         "version" : "0.04"
+         "version" : "0.05"
       }
    },
    "release_status" : "stable",
@@ -44,5 +44,5 @@
          "url" : "https://github.com/jberger/Mojo-FriendFeed"
       }
    },
-   "version" : "0.04"
+   "version" : "0.05"
 }
