@@ -35,8 +35,10 @@ sub parse {
   my $file_url = Mojo::URL->new($dom->at('a')->{href});
   my $pause_id = $file_url->path->parts->[-2];
 
-  my $deps = $ua->get("http://api.metacpan.org/v0/release/$dist")->res->json('/dependency') || [];
-  my @deps = map { $_->{module} } @$deps; # } # highlight fix
+  my $deps = $self->get_deps_cpantesters($file_url);
+  unless (@$deps) {
+    $deps = $self->get_deps_metacpan($dist);
+  }
 
   return {
     dist     => $dist,
@@ -44,8 +46,28 @@ sub parse {
     file_url => $file_url,
     pause_id => $pause_id,
     text     => $dom->text,
-    deps     => \@deps,
+    deps     => $deps,
   };
+}
+
+sub get_deps_cpantesters {
+  # takes Mojo::URL object pointing to a tar.gz release file
+  my $url = $_[0]->clone->host('cpan.cpantesters.org'); # source of the friendfeed data, fast;
+  $url->path->parts->[-1] =~ s/tar\.gz$/meta/;
+  my $deps = $ua->get($deps_url)->res->json('/prereqs/runtime/requires') || {};
+  $deps = [ keys %$deps ];
+  use Data::Dumper;
+  say STDERR 'CPANTESTERS: ' . Dumper($deps) if @$deps;
+  return $deps
+}
+
+sub get_deps_metacpan {
+  my $dist = shift;
+  my $deps = $ua->get("http://api.metacpan.org/v0/release/$dist")->res->json('/dependency') || [];
+  $deps = [ map { $_->{module} } @$deps ]; # } # highlight fix
+  use Data::Dumper;
+  say STDERR 'METACPAN: ' . Dumper($deps) if @$deps;
+  return $deps;
 }
 
 my $irc = Mojo::IRC->new(
