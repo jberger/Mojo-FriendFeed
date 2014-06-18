@@ -35,9 +35,9 @@ sub parse {
   my $file_url = Mojo::URL->new($dom->at('a')->{href});
   my $pause_id = $file_url->path->parts->[-2];
 
-  my $deps = $self->get_deps_cpantesters($file_url);
+  my $deps = get_deps_cpantesters($file_url);
   unless (@$deps) {
-    $deps = $self->get_deps_metacpan($dist);
+    $deps = get_deps_metacpan($dist);
   }
 
   return {
@@ -54,7 +54,7 @@ sub get_deps_cpantesters {
   # takes Mojo::URL object pointing to a tar.gz release file
   my $url = $_[0]->clone->host('cpan.cpantesters.org'); # source of the friendfeed data, fast;
   $url->path->parts->[-1] =~ s/tar\.gz$/meta/;
-  my $deps = $ua->get($deps_url)->res->json('/prereqs/runtime/requires') || {};
+  my $deps = $ua->get($url)->res->json('/prereqs/runtime/requires') || {};
   $deps = [ keys %$deps ];
   use Data::Dumper;
   say STDERR 'CPANTESTERS: ' . Dumper($deps) if @$deps;
