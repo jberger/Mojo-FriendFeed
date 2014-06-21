@@ -87,7 +87,7 @@ $ff->on( entry => sub {
     }
     if (my $filter = $job->{deps}) {
       if (my $dep = first { $_ =~ $filter } @deps) {
-        push @msgs, [ $job->{channel} => $msg . " (depends on $dep)") ];
+        push @msgs, [ $job->{channel} => $msg . " (depends on $dep)" ];
         next;
       }
     }
