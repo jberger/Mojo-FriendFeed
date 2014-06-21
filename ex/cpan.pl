@@ -66,6 +66,7 @@ $irc->connect(sub{
   }
 });
 
+my @msgs;
 my $ff = Mojo::FriendFeed->new( request => '/feed/cpan' );
 
 $ff->on( entry => sub {
@@ -80,13 +81,13 @@ $ff->on( entry => sub {
   for my $job (@{ $conf{jobs} }) {
     if (my $filter = $job->{dist}) {
       if ($data->{dist} =~ $filter) {
-        $irc->$send( $job->{channel} => $msg );
+        push @msgs, [ $job->{channel} => $msg ];
         next;
       }
     }
     if (my $filter = $job->{deps}) {
       if (my $dep = first { $_ =~ $filter } @deps) {
-        $irc->$send( $job->{channel} => $msg . " (depends on $dep)");
+        push @msgs, [ $job->{channel} => $msg . " (depends on $dep)") ];
         next;
       }
     }
@@ -97,6 +98,10 @@ $ff->on( error => sub {
   my ($ff, $tx, $err) = @_;
   warn $err || $tx->res->message;
   $ff->listen
+});
+
+Mojo::IOLoop->recurring( 1 => sub {
+  $irc->$send( @{ shift @msgs } ) if @msgs;
 });
 
 $ff->listen;
