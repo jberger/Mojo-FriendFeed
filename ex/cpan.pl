@@ -8,6 +8,7 @@ use Mojo::UserAgent;
 use Mojo::DOM;
 use Mojo::URL;
 use Mojo::IRC;
+use Mojo::Log;
 use List::Util 'first';
 
 use Getopt::Long;
@@ -23,7 +24,10 @@ my %defaults = (
 
 my %conf = (%defaults, %{ do $conf_file });
 
-my $ua = Mojo::UserAgent->new;
+my $log = Mojo::Log->new(path => 'log');
+$SIG{__WARN__} = sub { $log->error(@_) };
+
+my $ua  = Mojo::UserAgent->new;
 
 my $join = sub { shift->write( join => shift ) };
 my $send = sub { shift->write( privmsg => shift, ":@_" ) };
@@ -54,16 +58,21 @@ my $irc = Mojo::IRC->new(
   server => $conf{server},
 );
 $irc->register_default_event_handlers;
+
+$irc->on( error     => sub { $log->error($_[1]) } );
+$irc->on( irc_error => sub { $log->error($_[1]) } );
+
 $irc->connect(sub{
   my ($irc, $err) = @_;
   if ($err) {
-    warn $err;
+    $log->error($err);
     exit 1;
   }
   foreach my $job (@{ $conf{jobs} }) {
     next unless my $chan = $job->{channel};
     $irc->$join($chan) if $chan =~ /^#/;
   }
+  $log->info('Connected to IRC');
 });
 
 my @msgs;
@@ -74,7 +83,7 @@ $ff->on( entry => sub {
   my $data = parse($entry->{body});
   
   my $msg = $data->{text} . " http://metacpan.org/release/$data->{pause_id}/$data->{dist}-$data->{version}";
-  say $msg;
+  $log->info($msg);
 
   my @deps = @{ $data->{deps} || [] };
 
@@ -96,7 +105,7 @@ $ff->on( entry => sub {
 
 $ff->on( error => sub { 
   my ($ff, $tx, $err) = @_;
-  warn $err || $tx->res->message;
+  $log->error($err || $tx->res->message);
   $ff->listen
 });
 
