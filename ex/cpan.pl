@@ -100,6 +100,9 @@ $ff->on( entry => sub {
         next;
       }
     }
+    unless ( $job->{deps} || $job->{deps} ) {
+      push @msgs, [ $job->{channel} => $msg ];
+    }
   }
 });
 
